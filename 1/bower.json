@@ -1,0 +1,7 @@
+{
+  "name": "visualisation",
+  "dependencies": {
+    "dat.gui": "dataarts/dat.gui#v0.5.0",
+    "two.js": "jonobr1/two.js#v0.3.0"
+  }
+}
