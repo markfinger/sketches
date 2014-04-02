@@ -1,64 +1,105 @@
 (function () {
 
-  var stage = new PIXI.Stage(0xffffff);
-  var renderer;
+  var two = new Two({
+    fullscreen: true,
+    autostart: true,
+    type: Two.Types.webgl || Two.Types.canvas || undefined
+  }).appendTo(document.body);
 
   var settings = {
-    // Start on the golden angle
-    angle: 180 * (3 - Math.sqrt(5)),
-    circleRadius: 1,
-    count: 741
+    background: '#000000',
+    colour: '#0ef537',
+    duration: 150,
+    count: 20,
+    topWidth: 0.4,
+    bottomWidth: -0.25
   };
 
-  var setRendererSize = function() {
-    renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight, null, false, true);
-    _.each(document.getElementsByTagName('canvas'), function(element) {
-      element.remove();
-    });
-    document.body.appendChild(renderer.view);
-  };
+  var lines;
 
-  var circleIterator = _.range(settings.count + 1);
-  var circleRadius = settings.circleRadius;
+  var initShapes = function() {
+    two.clear();
 
-  var paint = function() {
-    stage.children.length = 0;
+    var background = two.makePolygon(
+      0, 0,
+      two.width, 0,
+      two.width, two.height,
+      0, two.height,
+      true
+    );
+    background.fill = settings.background;
 
-    var angleAsRad = settings.angle * (Math.PI / 180);
-    var constant = parseInt((Math.min(window.innerWidth, window.innerHeight) / 60));
-    var originX = window.innerWidth / 2;
-    var originY = window.innerHeight / 2;
-    var g = new PIXI.Graphics();
-
-    g.beginFill(0x000000, 1);
-
-    _.each(circleIterator, function(i) {
-      var radius = constant * Math.sqrt(i);
-      var angle = i * angleAsRad;
-      g.drawCircle(
-        originX + (Math.cos(angle) * radius),
-        originY + (Math.sin(angle) * radius),
-        circleRadius
+    lines = _.map(_.range(settings.count), function(index) {
+      var shape = two.makePolygon(
+        0, 0,
+        two.width, 0,
+        true
       );
+      shape.stroke = settings.colour;
+      shape.timeOffset = (settings.duration / settings.count) * index;
+      return shape;
     });
 
-    stage.addChild(g);
-    renderer.render(stage);
+    var leftBlock = two.makePolygon(
+      0, 0,
+      two.width * settings.topWidth, 0,
+      two.width * settings.bottomWidth, two.height,
+      0, two.height
+    );
+    leftBlock.fill = settings.background;
+
+    var rightBlock = two.makePolygon(
+      two.width * (1 - settings.topWidth), 0,
+      two.width, 0,
+      two.width, two.height,
+      two.width * (1 - settings.bottomWidth), two.height
+    );
+    rightBlock.fill = settings.background;
   };
 
-  var animate = function() {
-    requestAnimationFrame(function() {
-      settings.angle += 0.01;
-      paint();
-      requestAnimationFrame(animate);
+  var positionElements = function(frameCount) {
+    _.each(lines, function(line) {
+      var time = (frameCount - line.timeOffset) % settings.duration;
+      var y = easeInQuintic(time, -5, two.height, settings.duration);
+      if (y > two.height) {
+        y = 0;
+      }
+      line.translation.y = y;
     });
+  };
+
+  var easeInQuintic = function(t, b, c, d) {
+    // t: current time, b: beginning value, c: change in value, d: duration
+    var ts=(t/=d)*t;
+    var tc=ts*t;
+    return b+c*(tc*ts);
+  };
+
+  var onGUIChange = function() {
+    initShapes();
+  };
+
+  var initGUI = function() {
+    var gui = new dat.GUI();
+    gui.remember(settings);
+    for (var setting in settings) {
+      if (settings.hasOwnProperty(setting)) {
+        if (_.contains(settings[setting], '#')) {
+          gui.addColor(settings, setting).onChange(onGUIChange);
+        } else {
+          gui.add(settings, setting).onChange(onGUIChange);
+        }
+      }
+    }
+    gui.closed = true;
   };
 
   window.onload = function() {
-    setRendererSize();
-    paint();
-    animate();
-    window.onresize = _.debounce(setRendererSize, 50);
+    document.body.classList.remove('loading');
+//    initGUI();
+    initShapes();
+    two.bind('update', positionElements);
+    window.onresize = initShapes;
   };
 
 })();

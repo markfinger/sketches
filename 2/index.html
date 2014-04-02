@@ -1,11 +1,23 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Sketch</title>
+  <title>Sketch</title>
+  <link rel="stylesheet" href="css/main.css">
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-30502542-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
 </head>
 <body>
-    <script src="js/two.js"></script>
-    <script src="js/colours.js"></script>
-    <script src="js/main.js"></script>
+  <div class="background"></div>
+  <script src="js/raphael-min.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>

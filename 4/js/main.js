@@ -1,152 +1,53 @@
 (function () {
 
-  var stage = new PIXI.Stage(0xffffff);
-  var renderer;
-  var start;
+  var two = new Two({
+    fullscreen: true,
+    autostart: true,
+    type: Two.Types.webgl || Two.Types.canvas || undefined
+  }).appendTo(document.body);
 
   var settings = {
-    duration: 5000,
-    animMod: 1.25,
-    alphaFade: 1.8,
-    lineWidth: 4,
-    widthFactor: 4
+    radius: 1.3
   };
 
-  var setRendererSize = function() {
-    renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight, null, false, true);
-    _.each(document.getElementsByTagName('canvas'), function(element) {
-      element.remove();
-    });
-    document.body.appendChild(renderer.view);
-  };
+  var bg;
+  var circle;
 
-  var paint = function() {
-    stage.children.length = 0;
-    
-    var elapsed = (+new Date - start) % settings.duration;
-    
-    var duration = settings.duration;
+  var initShapes = function() {
+    two.clear();
 
-    var firstStage;
-    var secondStage = 0;
-    var thirdStage = 0;
-    var fourthStage = 0;
-
-    var animationStage = elapsed / (duration / 4);
-    if (animationStage > 1) {
-      firstStage = 1;
-      if (animationStage > 2) {
-        secondStage = 1;
-        if (animationStage >= 3) {
-          thirdStage = 1;
-          if (animationStage >= 4) {
-            fourthStage = 1;
-          } else {
-            fourthStage = animationStage % 1;
-          }
-        } else {
-          thirdStage = animationStage % 1;
-        }
-      } else {
-        secondStage = animationStage % 1;
-      }
-    } else {
-      firstStage = animationStage % 1;
-    }
-
-    var graphics = new PIXI.Graphics();
-
-    var lineWidth = settings.lineWidth;
-
-    graphics.lineStyle(
-      lineWidth,
-      Math.pow(16, 6) * (animationStage * settings.animMod),
-      fourthStage > 0 ? 1 - fourthStage * settings.alphaFade : 1
+    bg = two.makePolygon(
+      0, 0,
+      two.width, 0,
+      two.width, two.height,
+      0, two.height
     );
 
-    var width = Math.min(window.innerWidth, window.innerHeight) / settings.widthFactor;
+    circle = two.makeCircle(
+        two.width / 2,
+        two.height / 2,
+        Math.min(two.width, two.height) / 2 / settings.radius
+    );
+    circle.noStroke();
 
-    var cX = window.innerWidth / 2;
-    var cY = window.innerHeight / 2;
-    var x1;
-    var y1;
-    var x2;
-    var y2;
-
-    if (firstStage > 0) {
-      // Left vert
-      x1 = cX - width;
-      y1 = cY - width;
-      x2 = x1;
-      y2 = y1 + (2 * width * firstStage);
-      graphics.moveTo(x1, y1);
-      graphics.lineTo(x2, y2);
-
-      // Right vert
-      x1 = cX + width;
-      y1 = cY - width;
-      x2 = x1;
-      y2 = y1 + (2 * width * firstStage);
-      graphics.moveTo(x1, y1);
-      graphics.lineTo(x2, y2);
-
-      if (secondStage > 0) {
-        // Top horiz
-        x1 = cX - width - (lineWidth / 2);
-        y1 = cY - width + (lineWidth / 2);
-        x2 = x1 + ((2 * (width + (lineWidth / 2))) * secondStage);
-        y2 = y1;
-        graphics.moveTo(x1, y1);
-        graphics.lineTo(x2, y2);
-
-        // Bottom horiz
-        x1 = cX + width + (lineWidth / 2);
-        y1 = cY + width - (lineWidth / 2);
-        x2 = x1 - ((2 * (width + (lineWidth / 2))) * secondStage);
-        y2 = y1;
-        graphics.moveTo(x1, y1);
-        graphics.lineTo(x2, y2);
-
-        if (thirdStage > 0) {
-          // Top left diag
-          x1 = cX - width;
-          y1 = cY + width - (lineWidth / 2);
-          x2 = x1 + (2 * width * thirdStage);
-          y2 = y1 - (2 * width * thirdStage) + lineWidth;
-          graphics.moveTo(x1, y1);
-          graphics.lineTo(x2, y2);
-
-          // Top right diag
-          x1 = cX + width;
-          y1 = cY + width - (lineWidth / 2);
-          x2 = x1 - (2 * width * thirdStage);
-          y2 = y1 - (2 * width * thirdStage) + lineWidth;
-          graphics.moveTo(x1, y1);
-          graphics.lineTo(x2, y2);
-        }
-      }
-    }
-
-    stage.addChild(graphics);
-    renderer.render(stage);
+    onUpdate();
   };
 
-  var animate = function() {
-    requestAnimationFrame(function() {
-      paint();
-      requestAnimationFrame(animate);
-    });
+  var onUpdate = function(frameCount) {
+    var colour = $c.rand();
+    bg.fill = colour;
+    circle.fill = $c.complement(colour);
   };
 
   var onGUIChange = function() {
-    paint();
+    initShapes();
   };
 
   var initGUI = function() {
     var gui = new dat.GUI();
     gui.remember(settings);
     _.each(settings, function(value, setting) {
-      if (_.isString(value)) {
+      if (_.contains(value, '#')) {
         gui.addColor(settings, setting).onChange(onGUIChange);
       } else {
         gui.add(settings, setting).onChange(onGUIChange);
@@ -155,12 +56,10 @@
   };
 
   window.onload = function() {
-    start = +new Date;
 //    initGUI();
-    setRendererSize();
-//    paint();
-    animate();
-    window.onresize = _.debounce(setRendererSize, 50);
+    initShapes();
+    two.bind('update', onUpdate);
+    window.onresize = initShapes;
   };
 
 })();

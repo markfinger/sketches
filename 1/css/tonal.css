@@ -1,0 +1,17 @@
+body {
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+}
+
+#tonal-container {
+    position: absolute;
+	width: 100%;
+	margin: 0 auto;
+	height: 100%;
+}
+
+/*#tonal-container > svg {*/
+	/*display: inline-block;*/
+	/*margin: 0 auto;*/
+/*}*/
